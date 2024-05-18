@@ -16,5 +16,14 @@
 
       (t
        (ftp:store-file *ftp-connection* (namestring local-path) (namestring remote-path))
-       (format *debug-io* "~A: ~A => ~A~%" file-hash (namestring local-path) (namestring remote-path))))
+       (format *debug-io* "~A: ~A => ~A~%" file-hash local-path remote-path)))
     (state-tracker-track-file *state-tracker* remote-path file-hash)))
+
+(defun remove-file (remote-path)
+  (cond
+    (*dry-run-p*
+     (format *debug-io* "REMOVING: ~A [SIM]~%" remote-path))
+
+    (t
+     (ftp:send-dele-command *ftp-connection* (namestring remote-path))
+     (format *debug-io* "REMOVING: ~A~%" remote-path))))

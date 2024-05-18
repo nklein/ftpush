@@ -7,4 +7,5 @@
   (:export :file-matcher
            :extension-matcher
            :path-matcher
-           :directory-matcher))
+           :directory-matcher
+           :read-password-from-file))
