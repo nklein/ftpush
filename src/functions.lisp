@@ -2,10 +2,10 @@
 (in-package #:ftpush)
 
 (defun assert-empty-state ()
-  (unless (and (null *state-tracker*)
+  (unless (and (null *remote*)
+               (null *state-tracker*)
                (null *local-dir*)
                (null *remote-dir*)
-               (null *ftp-connection*)
                (null *excludes*))
     (error "Cannot invoke FTPUSH recursively, use FTPUSH-TREE and FTPUSH-FILE instead.")))
 
@@ -32,42 +32,36 @@
            (funcall fn local-path)))
     (find-if #'excludes-path *excludes*)))
 
-(defun ftpush* (thunk &key
-                        hostname
-                        (username "ftp")
-                        (password "none")
-                        state-file
-                        local-dir
-                        remote-dir
-                        excludes
-                        dry-run-p)
-  (assert-non-null hostname username password state-file local-dir remote-dir)
-  (assert-path-is-a-directory-that-exists local-dir)
+(defmacro ftpush ((&key
+                     remote-provider
+                     state-file
+                     local-dir
+                     remote-dir
+                     excludes)
+                  &body
+                    body)
+  (let ((sf (gensym "STATE-FILE-")))
+    `(progn
+       (assert-empty-state)
+       (let ((*remote* ,remote-provider)
+             (,sf ,state-file)
+             (*local-dir* (merge-pathnames (uiop:native-namestring ,local-dir)
+                                           (uiop/os:getcwd)))
+             (*remote-dir* ,remote-dir)
+             (*excludes* ,excludes))
+         (check-type *remote* (or ftpush-remote
+                                  null))
+         (assert-non-null ,sf *local-dir*)
+         (assert-path-is-a-directory-that-exists *local-dir*)
 
-  (let ((*state-tracker* (make-instance 'state-tracker :state-file state-file))
-        (*local-dir* (merge-pathnames (uiop:native-namestring local-dir)
-                                      (uiop/os:getcwd)))
-        (*remote-dir* remote-dir)
-        (*excludes* excludes)
-        (*dry-run-p* dry-run-p))
-    (flet ((run-it ()
-             (make-dirs *remote-dir*)
-             (unwind-protect
-                  (funcall thunk)
-               (state-tracker-completed *state-tracker* *ftp-connection*))))
-      (cond
-        (*dry-run-p*
-         (let ((*ftp-connection* nil))
-           (break "NO FTP")
-           (run-it)))
-        (t
-         (ftp:with-ftp-connection (*ftp-connection* :hostname hostname
-                                                    :username username
-                                                    :password password
-                                                    :passive-ftp-p t)
-           (unless *ftp-connection*
-             (break "FAILED FTP"))
-           (run-it)))))))
+         (let ((*state-tracker* (make-instance 'state-tracker :state-file ,sf)))
+           (remote-open-connection *remote*)
+           (unwind-protect
+                (progn
+                  (make-dirs *remote-dir*)
+                  ,@body)
+             (state-tracker-completed *state-tracker*)
+             (remote-close-connection *remote*)))))))
 
 (defun ftpush-file (&key
                       local-file

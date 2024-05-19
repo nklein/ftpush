@@ -17,7 +17,8 @@
   ((state-file :initarg :state-file :reader state-tracker-state-file)
    (state :accessor state-tracker-state :initform (make-state))
    (dirs :accessor state-tracker-dirs :initform (make-state))
-   (start-state :accessor state-tracker-start-state)))
+   (start-state :accessor state-tracker-start-state)
+   (dirtyp :accessor state-tracker-dirtyp :initform nil)))
 
 (defun read-state-file (filename)
   (let ((state (make-state)))
@@ -52,16 +53,19 @@
              (unless (get-state state file)
                (pushnew file missing))))
       (mapstate #'check start-state))
+    (when missing
+      (setf (state-tracker-dirtyp tracker) t))
     (dolist (file missing missing)
       (remove-file file))))
 
 (defmethod initialize-instance :after ((instance state-tracker) &key state-file &allow-other-keys)
   (setf (state-tracker-start-state instance) (read-state-file state-file)))
 
-(defgeneric state-tracker-completed (tracker ftp)
-  (:method ((tracker state-tracker) ftp)
+(defgeneric state-tracker-completed (tracker)
+  (:method ((tracker state-tracker))
     (remove-remote-files-not-used-this-time tracker)
-    (unless *dry-run-p*
+    (when (and (state-tracker-dirtyp tracker)
+               *remote*)
       (write-state-file (state-tracker-state-file tracker)
                         (state-tracker-state tracker)))))
 
@@ -73,6 +77,8 @@
 
 (defgeneric state-tracker-track-file (tracker remote-file file-hash)
   (:method ((tracker state-tracker) remote-file file-hash)
+    (unless (state-tracker-previously-uploaded-p tracker remote-file file-hash)
+      (setf (state-tracker-dirtyp tracker) t))
     (add-state (state-tracker-state tracker) remote-file file-hash)
     (values)))
 

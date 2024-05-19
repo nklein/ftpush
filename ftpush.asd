@@ -5,13 +5,13 @@
   :author "Patrick Stein <pat@nklein.com>"
   :license "UNLICENSE"
   :version "0.1.20240518"
-  :depends-on (#:cl-ftp #:cl-ppcre #:uiop #:md5 #:cl-base64)
+  :depends-on (#:uiop #:cl-ppcre #:md5 #:cl-base64)
   :components
   ((:static-file "README.md")
    (:static-file "UNLICENSE.txt")
    (:module "src"
     :components ((:file "package")
-                 (:file "macros" :depends-on ("package"))
+                 (:file "remote-interface" :depends-on ("package"))
                  (:file "specials" :depends-on ("package"))
                  (:file "filename-utils" :depends-on ("package"))
                  (:file "ftp-helpers" :depends-on ("package"
@@ -25,3 +25,16 @@
                                                  "specials"
                                                  "ftp-helpers"
                                                  "state-tracker"))))))
+
+(asdf:defsystem #:ftpush/ftp
+  :description "Remote interface to use CL-FTP as an FTPUSH-REMOTE for FTPUSH."
+  :author "Patrick Stein <pat@nklein.com>"
+  :license "UNLICENSE"
+  :version "0.1.20240518"
+  :depends-on (#:ftpush #:cl-ftp)
+  :components
+  ((:static-file "README.md")
+   (:static-file "UNLICENSE.txt")
+   (:module "src/providers/ftp"
+    :components ((:file "package")
+                 (:file "remote" :depends-on ("package"))))))
