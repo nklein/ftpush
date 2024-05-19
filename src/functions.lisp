@@ -1,6 +1,11 @@
 
 (in-package #:ftpush)
 
+(defun copy-pathname (path)
+  (make-pathname :directory (pathname-directory path)
+                 :name (pathname-name path)
+                 :type (pathname-type path)))
+
 (defun assert-empty-state ()
   (unless (and (null *remote*)
                (null *state-tracker*)
@@ -59,7 +64,8 @@
            (unwind-protect
                 (progn
                   (make-dirs *remote-dir*)
-                  ,@body)
+                  (let ((*made-dirs* (copy-pathname *remote-dir*)))
+                    ,@body))
              (state-tracker-completed *state-tracker*)
              (remote-close-connection *remote*)))))))
 
@@ -81,7 +87,7 @@
                       excludes)
   (assert-nonempty-state)
   (let ((starting-remote-dir *remote-dir*)
-        (made nil)
+        (*made-dirs* (copy-pathname *made-dirs*))
         (*excludes* (append *excludes* excludes))
         (*local-dir* (append-dirs *local-dir* local-dir))
         (*remote-dir* (append-dirs *remote-dir* remote-dir)))
@@ -93,10 +99,7 @@
                                 (merge-pathnames base *remote-dir*)
                                 *remote-dir*)))
           (unless (excludedp local-path)
-            (unless made
-              (prog1
-                  (make-dirs remote-dir starting-remote-dir)
-                (setf made t)))
+            (setf *made-dirs* (make-dirs *remote-dir* *made-dirs*))
             (push-file local-path remote-path))))
       (dolist (subdir (uiop:subdirectories *local-dir*))
         (let ((just-dir (enough-namestring subdir *local-dir*)))
