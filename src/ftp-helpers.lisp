@@ -21,8 +21,8 @@
 
 (defun make-dir (path)
   (unless (state-tracker-previously-made-directory-p *state-tracker* path)
-    (remote-make-directory *remote* (namestring path))
-    (state-tracker-track-directory *state-tracker* path)))
+    (remote-make-directory *remote* (namestring path)))
+  (state-tracker-track-directory *state-tracker* path))
 
 (defun make-dirs (path &optional done)
   (labels ((rec (done todo absolute-or-relative)

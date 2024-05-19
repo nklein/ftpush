@@ -1,6 +1,8 @@
 
 (in-package #:ftpush)
 
+(defconstant +directory-hash+ (string :dirhash))
+
 (defun make-state ()
   (make-hash-table :test 'equal))
 
@@ -16,7 +18,6 @@
 (defclass state-tracker ()
   ((state-file :initarg :state-file :reader state-tracker-state-file)
    (state :accessor state-tracker-state :initform (make-state))
-   (dirs :accessor state-tracker-dirs :initform (make-state))
    (start-state :accessor state-tracker-start-state)
    (dirtyp :accessor state-tracker-dirtyp :initform nil)))
 
@@ -49,9 +50,10 @@
         (start-state (state-tracker-start-state tracker))
         (missing nil))
     (flet ((check (file hash)
-             (declare (ignore hash))
              (unless (get-state state file)
-               (pushnew file missing))))
+               (setf (state-tracker-dirtyp tracker) t)
+               (unless (string= hash +directory-hash+)
+                 (pushnew file missing)))))
       (mapstate #'check start-state))
     (when missing
       (setf (state-tracker-dirtyp tracker) t))
@@ -84,10 +86,8 @@
 
 (defgeneric state-tracker-previously-made-directory-p (tracker dir)
   (:method ((tracker state-tracker) dir)
-    (and (get-state (state-tracker-dirs tracker) dir)
-         t)))
+    (state-tracker-previously-uploaded-p tracker dir +directory-hash+)))
 
 (defgeneric state-tracker-track-directory (tracker dir)
   (:method ((tracker state-tracker) dir)
-    (add-state (state-tracker-dirs tracker) dir t)
-    (values)))
+    (state-tracker-track-file tracker dir +directory-hash+)))
