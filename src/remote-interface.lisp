@@ -1,0 +1,40 @@
+
+(in-package #:ftpush)
+
+(defclass ftpush-remote ()
+  ())
+
+(defgeneric remote-open-connection (remote)
+  (:method ((remote null))
+    (format *debug-io* "[DRY-RUN] "))
+  (:method :after (remote)
+    (format *debug-io* "Open Connection~%"))
+  (:documentation "Establish the connection needed for the REMOTE provider."))
+
+(defgeneric remote-close-connection (remote)
+  (:method ((remote null))
+    (format *debug-io* "[DRY-RUN] "))
+  (:method :after (remote)
+    (format *debug-io* "Close Connection~%"))
+  (:documentation "Close the connection needed for the REMOTE provider."))
+
+(defgeneric remote-make-directory (remote directory)
+  (:method ((remote null) (directory string))
+    (format *debug-io* "[DRY-RUN] "))
+  (:method :after (remote (directory string))
+    (format *debug-io* "MKDIR: ~S~%" directory))
+  (:documentation "Use the REMOTE provider to remotely create the given DIRECTORY from its namestring."))
+
+(defgeneric remote-store-file (remote local-path remote-path)
+  (:method ((remote null) (local-path string) (remote-path string))
+    (format *debug-io* "[DRY-RUN] "))
+  (:method :after (remote (local-path string) (remote-path string))
+    (format *debug-io* "SEND: ~S => ~S~%" local-path remote-path))
+  (:documentation "Use the REMOTE provider to copy the data from the LOCAL-PATH to the REMOTE-PATH. Both LOCAL-PATH and REMOTE-PATH will be namestrings."))
+
+(defgeneric remote-delete-file (remote remote-path)
+  (:method ((remote null) (remote-path string))
+    (format *debug-io* "[DRY-RUN] "))
+  (:method :after (remote (remote-path string))
+    (format *debug-io* "DELETE: ~S~%" remote-path))
+  (:documentation "Use the REMOTE provider to remotely delete the remote file specified by the namestring REMOTE-PATH."))
