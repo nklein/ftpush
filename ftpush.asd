@@ -4,7 +4,7 @@
   :description "Domain-specific language for pushing files to ftp sites."
   :author "Patrick Stein <pat@nklein.com>"
   :license "UNLICENSE"
-  :version "0.1.20240518"
+  :version "0.2.20240518"
   :depends-on (#:uiop #:cl-ppcre #:md5 #:cl-base64)
   :components
   ((:static-file "README.md")
@@ -30,7 +30,7 @@
   :description "Remote interface to use CL-FTP as an FTPUSH-REMOTE for FTPUSH."
   :author "Patrick Stein <pat@nklein.com>"
   :license "UNLICENSE"
-  :version "0.1.20240518"
+  :version "0.2.20240518"
   :depends-on (#:ftpush #:cl-ftp)
   :components
   ((:static-file "README.md")
