@@ -45,23 +45,28 @@
   (assert-path-is-a-directory-that-exists local-dir)
 
   (let ((*state-tracker* (make-instance 'state-tracker :state-file state-file))
-        (*local-dir* (uiop:native-namestring local-dir))
+        (*local-dir* (merge-pathnames (uiop:native-namestring local-dir)
+                                      (uiop/os:getcwd)))
         (*remote-dir* remote-dir)
         (*excludes* excludes)
         (*dry-run-p* dry-run-p))
     (flet ((run-it ()
+             (make-dirs *remote-dir*)
              (unwind-protect
                   (funcall thunk)
                (state-tracker-completed *state-tracker* *ftp-connection*))))
       (cond
         (*dry-run-p*
          (let ((*ftp-connection* nil))
+           (break "NO FTP")
            (run-it)))
         (t
          (ftp:with-ftp-connection (*ftp-connection* :hostname hostname
                                                     :username username
                                                     :password password
                                                     :passive-ftp-p t)
+           (unless *ftp-connection*
+             (break "FAILED FTP"))
            (run-it)))))))
 
 (defun ftpush-file (&key
@@ -71,33 +76,35 @@
   (assert-non-null local-file remote-file)
   (let ((local-path (merge-pathnames local-file *local-dir*))
         (remote-path (merge-pathnames remote-file *remote-dir*)))
+    (make-dirs (enough-namestring (directory-of remote-path) *remote-dir*)
+               *remote-dir*)
     (unless (excludedp local-path)
       (push-file local-path remote-path))))
-
-(defun append-dirs (a b)
-  (if (null a)
-      b
-      (merge-pathnames a b)))
 
 (defun ftpush-tree (&key
                       local-dir
                       remote-dir
                       excludes)
   (assert-nonempty-state)
-  (let ((*excludes* (append *excludes* excludes))
-        (*local-dir* (append-dirs local-dir *local-dir*))
-        (*remote-dir* (append-dirs remote-dir *remote-dir*)))
-    (assert-path-is-a-directory-that-exists *local-dir*)
-    (dolist (local-path (uiop:directory-files *local-dir*))
-      (let* ((base (basename local-path))
-             (remote-path (merge-pathnames base *remote-dir*)))
-        (unless (excludedp local-path)
-          (push-file local-path remote-path))))
-    (dolist (subdir (uiop:subdirectories *local-dir*))
-      (let ((just-dir (enough-namestring subdir *local-dir*)))
-        (ftpush-tree :local-dir just-dir
-                     :remote-dir just-dir)))))
-
-(defun read-password-from-file (file)
-  (with-open-file (in file)
-    (read-line in)))
+  (let ((starting-remote-dir *remote-dir*)
+        (made nil)
+        (*excludes* (append *excludes* excludes))
+        (*local-dir* (append-dirs *local-dir* local-dir))
+        (*remote-dir* (append-dirs *remote-dir* remote-dir)))
+    (unless (excludedp *local-dir*)
+      (assert-path-is-a-directory-that-exists *local-dir*)
+      (dolist (local-path (uiop:directory-files *local-dir*))
+        (let* ((base (basename local-path))
+               (remote-path (if base
+                                (merge-pathnames base *remote-dir*)
+                                *remote-dir*)))
+          (unless (excludedp local-path)
+            (unless made
+              (prog1
+                  (make-dirs remote-dir starting-remote-dir)
+                (setf made t)))
+            (push-file local-path remote-path))))
+      (dolist (subdir (uiop:subdirectories *local-dir*))
+        (let ((just-dir (enough-namestring subdir *local-dir*)))
+          (ftpush-tree :local-dir just-dir
+                       :remote-dir just-dir))))))

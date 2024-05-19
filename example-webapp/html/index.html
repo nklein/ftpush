@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+  <title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Example Webapp</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="js/bootstrap.min.js"></script>
+  </title>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col col-2">
+          <button class="btn btn-danger" type="button"
+                  style="margin: 0.25in"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#nklein-card"
+                  aria-expanded="true"
+                  aria-controls="nklein-card">
+            Toggle
+          </button>
+        </div>
+        <div id="nklein-card" class="collapse show col col-10">
+          <div class="card" style="width: 18rem;">
+            <img class="card-img-top" src="images/nklein.png" alt="part of the nklein logo">
+            <div class="card-body">
+              <h5 class="card-title">nklein software</h5>
+              <p class="card-text">This sample application was created by <strong>nklein software</strong>
+                to demonstrate the <em>FTPush</em> Lisp library.</p>
+              <a href="https://nklein.com/" class="btn btn-primary">Go to nklein</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

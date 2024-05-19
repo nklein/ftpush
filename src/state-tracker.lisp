@@ -16,13 +16,15 @@
 (defclass state-tracker ()
   ((state-file :initarg :state-file :reader state-tracker-state-file)
    (state :accessor state-tracker-state :initform (make-state))
+   (dirs :accessor state-tracker-dirs :initform (make-state))
    (start-state :accessor state-tracker-start-state)))
 
 (defun read-state-file (filename)
   (let ((state (make-state)))
     (handler-case
         (with-open-file (in filename)
-          (loop :for row := (read in nil)
+          (loop :for row := (with-standard-io-syntax
+                              (read in nil))
                 :while row
                 :do (destructuring-bind (file hash) row
                       (add-state state file hash))))
@@ -72,5 +74,14 @@
 (defgeneric state-tracker-track-file (tracker remote-file file-hash)
   (:method ((tracker state-tracker) remote-file file-hash)
     (add-state (state-tracker-state tracker) remote-file file-hash)
-    ;; maybe remove it from the start-state? if so, rename start-state to remaining?
+    (values)))
+
+(defgeneric state-tracker-previously-made-directory-p (tracker dir)
+  (:method ((tracker state-tracker) dir)
+    (and (get-state (state-tracker-dirs tracker) dir)
+         t)))
+
+(defgeneric state-tracker-track-directory (tracker dir)
+  (:method ((tracker state-tracker) dir)
+    (add-state (state-tracker-dirs tracker) dir t)
     (values)))

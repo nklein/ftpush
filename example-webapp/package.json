@@ -1,0 +1,14 @@
+{
+  "name": "example-webapp",
+  "version": "1.0.0",
+  "description": "Just an example to show using FTPush",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Patrick Stein <pat@nklein.com>",
+  "license": "SEE LICENCE IN UNLICENSED.txt",
+  "dependencies": {
+    "bootstrap": "^5.3.3"
+  }
+}

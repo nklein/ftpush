@@ -3,42 +3,28 @@
 (use-package :ftpush)
 
 (defun push-web-app (dry-run-p)
-  (ftpush (:hostname "ftp.webhost.com"
-           :username "mylogin"
+  (ftpush (:hostname "ftp.nklein.com"
+           :username "nkleincom"
            :password (read-password-from-file #P "~/.ftpush/webapp.passwd")
            :state-file #P"~/.ftpush/webapp.ftpush"
-           :local-dir #P"~/src/webapp/"
+           :local-dir #P"example-webapp/"
            :remote-dir #P"/webapp/"
            :excludes (list (file-matcher "\\A.gitignore\\z")
-                           (path-matcher "/secrets/.*\\.local\\z")
-                           (extension-matcher "\\Asample\\z")
-                           (directory-matcher "/.git/\\z")
+                           (extension-matcher "\\Ajson\\z")
+                           (directory-matcher "/private/\\z")
+                           (directory-matcher "/node_modules/\\z")
                            (lambda (local-filepath)
                              (declare (ignore local-filepath))
                              ;; do something with local-filepath
                              nil))
            :dry-run-p dry-run-p)
 
-    (ftpush-file :local-file #P"config/nginx/default.conf"
-                 :remote-file #P"conf.d/default.conf")
+    (ftpush-tree :excludes (list (path-matcher "/html/.*\\orig\\z")))
 
-    (ftpush-tree :local-dir #P"secrets/"
-                 :remote-dir #P"secrets/")
+    (ftpush-file :local-file #P"node_modules/bootstrap/dist/css/bootstrap.min.css"
+                 :remote-file #P"/webapp/html/css/bootstrap.min.css")
 
-    (ftpush-tree :local-dir #P"client/html/"
-                 :remote-dir #P"html/"
-                 :excludes (list (file-matcher "\\A.keep\\z")))
+    (ftpush-file :local-file #P"node_modules/bootstrap/dist/js/bootstrap.min.js"
+                 :remote-file #P"/webapp/html/js/bootstrap.min.js")))
 
-    (ftpush-tree :local-dir #P"client/src/dist/"
-                 :remote-dir #P"html/js/")
-
-    (ftpush-tree :local-dir #P"server/src/html/api/"
-                 :remote-dir #P"html/api/")
-
-    (ftpush-tree :local-dir #P"server/src/private/"
-                 :remote-dir #P"private/")
-
-    (ftpush-tree :local-dir #P"server/src/vendor/"
-                 :remote-dir #P"vendor/")))
-
-(push-web-app t)
+(push-web-app nil)

@@ -5,5 +5,8 @@
   (namestring (make-pathname :name (pathname-name path)
                              :type (pathname-type path))))
 
-(defun immediate-parent-dir (path)
-  (make-pathname :directory (first (last (pathname-directory path)))))
+(defun directory-of (path)
+  (make-pathname :directory (pathname-directory path)))
+
+(directory-of #P"/foo/bar/baz/goo.png")
+(directory-of #P"/foo/bar/baz/")
